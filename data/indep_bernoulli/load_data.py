@@ -1,5 +1,5 @@
-import os
 import sys
+import os
 
 from collections import namedtuple
 from six.moves.urllib.request import urlopen

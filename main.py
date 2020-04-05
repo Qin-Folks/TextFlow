@@ -36,6 +36,7 @@ def run_epoch(train, start_kl_weight, delta_kl_weight, NLL_samples, ds, steps=-1
         
         batch_data = Variable(batch.text[0].to(device))
         lengths = Variable(batch.text[1].to(device))
+        # 这个batch data里面包含不止一个sentence. 每一列是一个sentence, 然后由lengths确定这个句子什么时候结束.
 
         if train and accum_counter == 0:
             model.zero_grad()

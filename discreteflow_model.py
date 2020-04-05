@@ -35,9 +35,9 @@ class InferenceBlock(nn.Module):
         """
             output is z [T, B, s, E]
         """
-
         ## Run RNN over input
         T, B = inf_inp.shape[:2]
+        # 似乎T是句子的长度, B是latent dimension的size.
         hidden_rnn = self.init_hidden_rnn(B)
 
         inf_inp_packed = torch.cat((inf_inp, cond_inp), -1)
@@ -236,7 +236,6 @@ class DFModel(nn.Module):
             lengths is [B] with lengths of each sentence in the batch
             all inputs should be on the same compute device
         """
-
         T, B = x.shape[:2]
         
         ## Create ELBO_sample versions of inputs copied across a new dimension

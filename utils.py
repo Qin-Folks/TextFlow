@@ -15,6 +15,7 @@ from data.indep_bernoulli.load_data import load_data
 # Data processing
 # ------------------------------------------------------------------------------------------------------------------------------
 
+
 class SentenceLanguageModelingDataset(data.Dataset):
     def __init__(self, path, text_field, encoding='utf-8', include_eos=True, **kwargs):
         fields = [('text', text_field)]
@@ -27,6 +28,7 @@ class SentenceLanguageModelingDataset(data.Dataset):
                 examples.append(data.Example.fromlist([text], fields))
 
         super().__init__(examples, fields, **kwargs)
+
 
 def load_indep_bernoulli(dataset):
     dset = load_data(dataset)
@@ -80,18 +82,17 @@ def load_indep_bernoulli(dataset):
     vocab_size = 89
 
     return (train, val, test), pad_val, vocab_size
-        
+
+
 def load_categorical(dataset, noT_condition_prior):
     unk_token = '<unk>'
     text = torchtext.data.Field(include_lengths=True, unk_token=unk_token, tokenize=(lambda s: list(s.strip())))
-
 
     MAX_LEN = 288
     MIN_LEN = 1
 
     train, val, test = SentenceLanguageModelingDataset.splits(path='./data/%s/'%dataset, train='train.txt', validation='valid.txt', test='test.txt', text_field=text,
                                                               include_eos=noT_condition_prior, filter_pred=lambda x: len(vars(x)['text']) <= MAX_LEN and len(vars(x)['text']) >= MIN_LEN)
-
 
     text.build_vocab(train)
     pad_val = text.vocab.stoi['<pad>']
