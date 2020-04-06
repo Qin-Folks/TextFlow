@@ -183,21 +183,24 @@ def get_kl_weight(args, i):
 # Model utility functions
 # ------------------------------------------------------------------------------------------------------------------------------
 
+
 def make_pos_cond(T, B, lengths, max_T):
     device = lengths.device
 
     p_plus_int = torch.arange(T, device=device)[:, None].repeat(1, B)[:, :, None]
     p_plus_oh = torch.empty(T, B, max_T, device=device).zero_()
-    p_plus_oh.scatter_(2, p_plus_int, 1)
-    
+    p_plus_oh.scatter_(2, p_plus_int, 1)  # 给哪些地方写上1, 似乎是用来记录第几个词.
+
     p_minus_int = lengths[None, :] - 1 - torch.arange(T, device=device)[:, None]
     p_minus_int[p_minus_int < 0] = max_T-1
     p_minus_oh = torch.empty(T, B, max_T, device=device).zero_()
-    p_minus_oh.scatter_(2, p_minus_int[:, :, None], 1)
-    
+    p_minus_oh.scatter_(2, p_minus_int[:, :, None], 1)  # 这里好像是说: 倒着数的话是第几个词
+
+    # 每个句子的每一个词有288 + 288的维度. 这个是干啥的.
     pos_cond = torch.cat((p_plus_oh, p_minus_oh), -1) # [T, B, max_T*2]
 
     return pos_cond
+
 
 def reverse_padded_sequence(inputs, lengths, batch_first=False):
     if batch_first:

@@ -35,18 +35,19 @@ class InferenceBlock(nn.Module):
         """
             output is z [T, B, s, E]
         """
+        # inf_inp: embedding
         ## Run RNN over input
         T, B = inf_inp.shape[:2]
-        # 似乎T是句子的长度, B是latent dimension的size.
         hidden_rnn = self.init_hidden_rnn(B)
 
+        # 把embedding和第几个词给拼起来了
         inf_inp_packed = torch.cat((inf_inp, cond_inp), -1)
 
         total_length = inf_inp_packed.shape[0]
         inf_inp_packed = torch.nn.utils.rnn.pack_padded_sequence(inf_inp_packed, lengths)
         rnn_outp, _ = self.rnn_q(inf_inp_packed, hidden_rnn) # [T, B, hidden_size], [num_layers, B, hidden_size]x2
         rnn_outp = torch.nn.utils.rnn.pad_packed_sequence(rnn_outp, total_length=total_length)[0]
-        
+
         if 'rnn_x' in self.dropout_locations:
             rnn_outp = self.dropout(rnn_outp)
         
@@ -70,6 +71,7 @@ class InferenceBlock(nn.Module):
         return z, log_q_z
 
     def init_hidden_rnn(self, batch_size):
+        # 这里的batch_size是说有几个句子
         weight = next(self.parameters())
         h = weight.new_zeros(self.q_rnn_layers*2, batch_size, self.hidden_size)
         c = weight.new_zeros(self.q_rnn_layers*2, batch_size, self.hidden_size)
@@ -242,6 +244,7 @@ class DFModel(nn.Module):
         lengths_s = lengths[:, None].repeat(1, ELBO_samples).view(-1)
 
         pos_cond = make_pos_cond(T, B, lengths, self.max_T)
+        # 这个pos_cond_s是干啥的
         pos_cond_s = pos_cond[:, :, None, :].repeat(1, 1, ELBO_samples, 1).view(T, B*ELBO_samples, self.max_T*2)
 
         ## Get the initial x embeddings
@@ -253,6 +256,7 @@ class DFModel(nn.Module):
         if 'embedding' in self.dropout_locations:
             embeddings = self.dropout(embeddings)
 
+        # 看懂这一点RNN怎么写的
         z, log_q_z = self.inference_model.sample_q_z(embeddings, lengths, pos_cond, ELBO_samples) # [T, B, s, E]
             
         log_p_z = self.generative_model.prior.evaluate(z, lengths_s, cond_inp_s=pos_cond_s)
